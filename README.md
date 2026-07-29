@@ -7,12 +7,12 @@ preserves the exact external HTTP/WS paths, so the original **React frontend run
 
 Why the BEAM: OTP gives native SSH (`:ssh`), crypto (`:crypto`), and LDAP (`:eldap`); Phoenix
 Channels/WebSockets fit the terminal/tunnel/console streams; and OTP supervision models the
-long-lived SSH sessions, pools, and tunnels far better than Node singletons. See
-[`docs/FEASIBILITY.md`](docs/FEASIBILITY.md) — the study concluded **GO, no blockers**.
+long-lived SSH sessions, pools, and tunnels far better than Node singletons. The feasibility
+study concluded **GO, no blockers**.
 
 ## Status
 
-Working and verified end-to-end (see [`docs/ROADMAP.md`](docs/ROADMAP.md) for the full breakdown):
+Working and verified end-to-end:
 
 - **Data**: faithful 49-table schema, data-compatible with an existing Termix SQLite DB.
 - **Crypto**: HKDF, AES-256-GCM field envelopes, v3 per-user DEK wrap — **byte-compatible with the
@@ -43,6 +43,15 @@ at it and provide the matching `ENCRYPTION_KEY`/`JWT_SECRET`/`DATABASE_KEY`.
 mix test        # crypto compat, auth flow, SSH terminal, CRUD suites
 ```
 
+## Container image
+
+Multi-arch images (`linux/amd64`, `linux/arm64`) are built by CI from this repo plus the
+[frontend fork](https://github.com/sysinit-at/termelix-frontend) and published to GHCR:
+
+```sh
+docker run -p 8080:8080 -v termelix-data:/app/data ghcr.io/sysinit-at/termelix:latest
+```
+
 ## Layout
 
 - `lib/termelix/crypto/` — HKDF, field crypto, DEK wrap, system keys (byte-compatible with Node)
@@ -50,10 +59,6 @@ mix test        # crypto compat, auth flow, SSH terminal, CRUD suites
 - `lib/termelix/ssh/` — OTP `:ssh` client (terminal engine) + client-key callback
 - `lib/termelix/*.ex` — contexts (accounts, hosts, credentials, snippets, preferences, …)
 - `lib/termelix_web/` — endpoint, router, plugs (auth/CORS), controllers, terminal WebSocket
-- `bin/tmx` — the CLI half of the agent interface; see
-  [`docs/AGENT_INTERFACE.md`](docs/AGENT_INTERFACE.md) for keys, `tmx`, and MCP with Claude Code or Codex
-- `docs/` — feasibility study, frontend API contract, roadmap & conventions, deployment assessments
-  ([Podman/quadlet](docs/PODMAN_QUADLET_ASSESSMENT.md), [built-in TLS](docs/TLS_TERMINATION_ASSESSMENT.md))
 
 ## License
 
