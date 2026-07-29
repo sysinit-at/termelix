@@ -1,0 +1,33 @@
+# Termelix on the BEAM — single-container deployment.
+#
+# Build context is the repo root; the frontend source is required at ./frontend
+# (e.g. `git clone https://github.com/Termix-SSH/Termix frontend` or a submodule) —
+# the image builds the SPA itself. Staging it into priv/static/spa beforehand does not
+# work: .dockerignore keeps that directory out of the context (a host copy would leak
+# stale pre-gzipped assets into the image), and stage 1 needs frontend/package.json
+# regardless.
+services:
+  termelix:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: termelix-beam
+    restart: unless-stopped
+    # SIGTERM starts a drain: ThousandIsland holds the listener open for up to its
+    # `shutdown_timeout` (15 s) so in-flight requests and terminal WebSockets finish, then the
+    # rest of the tree unwinds (the pooled SSH.Conns get 5 s to close, sessions and the Repo
+    # after that). Docker's 10 s default SIGKILLed the VM in the middle of that on
+    # every redeploy, so keep this comfortably above 15 s + the tail.
+    stop_grace_period: 30s
+    ports:
+      - "8080:8080"
+    environment:
+      PHX_HOST: localhost # set to your public hostname
+    volumes:
+      # The volume keeps its pre-rename key: compose derives the on-disk volume name
+      # from it (<project>_termix-data), so renaming it would orphan an existing
+      # deployment's data and silently start an empty one.
+      - termix-data:/app/data
+
+volumes:
+  termix-data:

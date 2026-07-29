@@ -1,0 +1,55 @@
+# Build context is the repo root (docker/docker-compose.yml sets `context: ..`).
+# docker/Dockerfile copies exactly: mix.exs, mix.lock, config/, lib/, priv/ and frontend/.
+# Everything below is host-side state that must not be uploaded to the daemon — either
+# because it is large, because it is a secret, or because a stale copy of it would end up
+# inside the image.
+
+# Elixir build state. Rebuilt inside the image; host artifacts are the wrong OTP/glibc
+# anyway, and _build + deps dominate the context size.
+_build
+deps
+cover
+doc
+*.ez
+erl_crash.dump
+
+# Locally built SPA. Stage 1 always rebuilds it and COPYs its dist over priv/static/spa,
+# but that merge only overwrites same-named files: a host copy would leak everything the
+# fresh build has no counterpart for — in particular the `.gz` variants that
+# scripts/build-frontend.sh adds and vite does not, which Plug.Static serves in preference
+# to the plain file. The image would then ship stale JavaScript.
+priv/static/spa
+
+# Runtime data: the SQLite DB and the generated root secrets live in the termix-data
+# volume, never in an image layer.
+db
+priv/tmp
+*.db
+*.db-shm
+*.db-wal
+.env
+.env.*
+
+# Frontend: the source is required (stage 1 builds it), its build state is not. Docker only
+# honours the .dockerignore at the context root, so the frontend checkout's own is inert.
+**/node_modules
+frontend/dist
+frontend/db
+frontend/*.db*
+frontend/release
+frontend/coverage
+
+# VCS, editor and agent metadata.
+**/.git
+.gitignore
+.github
+.claude
+.vscode
+.idea
+.DS_Store
+
+# Not part of the release build.
+test
+scripts
+docs
+*.md
