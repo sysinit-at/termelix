@@ -180,19 +180,24 @@ defmodule Termelix.SSH.KeyDecodeTest do
       assert elem(key, 0) == :RSAPrivateKey
     end
 
-    # NOT a defect in this module and NOT a regression: the decoder this replaced made the same
-    # `:public_key.pem_entry_decode/1` call, so an `ssh-keygen -t ecdsa -m PEM` key has never
-    # worked here. OTP raises MatchError on the ASN.1 `invalid_choice_tag` because that key
-    # carries EXPLICIT curve parameters rather than a named-curve OID. Pinned so the behaviour
-    # is a known limitation with a workaround (use ed25519, or RSA, or the OpenSSH format —
-    # all three are covered above and all three work) instead of a mystery.
-    test "an ECDSA key in PEM form is rejected — a known OTP limitation", %{keys: keys} do
-      assert {:error, :key_decode_failed} = KeyDecode.decode(keys.pem_ecdsa, nil)
-      assert {:error, :key_decode_failed} = KeyDecode.check_format(keys.pem_ecdsa)
+    # NOT a defect in this module and NOT a regression — but which way it goes depends on the
+    # ssh-keygen that generated the key. Older OpenSSH writes `-t ecdsa -m PEM` keys with
+    # EXPLICIT curve parameters, which `:public_key.pem_entry_decode/1` rejects with a
+    # MatchError on the ASN.1 `invalid_choice_tag`; newer OpenSSH (e.g. on the CI runners)
+    # writes a named-curve key that decodes fine. Pin both legs so either environment is a
+    # known behaviour with a story: success is success, and the failure carries an actionable
+    # message (use ed25519, RSA, or the OpenSSH format — all covered above, all work).
+    test "an ECDSA key in PEM form decodes or is rejected actionably", %{keys: keys} do
+      case KeyDecode.decode(keys.pem_ecdsa, nil) do
+        {:ok, key} ->
+          assert elem(key, 0) == :ECPrivateKey
+          assert :ok = KeyDecode.check_format(keys.pem_ecdsa)
 
-      # The same key in OpenSSH form is fine, which is what the operator should be told.
-      assert {:error, msg} = {:error, KeyDecode.message(:key_decode_failed)}
-      assert is_binary(msg) and msg != ""
+        {:error, :key_decode_failed} ->
+          assert {:error, :key_decode_failed} = KeyDecode.check_format(keys.pem_ecdsa)
+          msg = KeyDecode.message(:key_decode_failed)
+          assert is_binary(msg) and msg != ""
+      end
     end
 
     test "a wrong passphrase is reported as a decryption failure", %{keys: keys} do
