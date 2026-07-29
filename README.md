@@ -1,9 +1,15 @@
-# Termix on the BEAM (Termelix)
+# Termelix
 
-An Elixir/Phoenix port of [Termix](https://github.com/Termix-SSH/Termix) — self-hosted SSH & remote
-management — onto the Erlang VM. The original Node/TypeScript backend (~103K LOC across 12
-micro-services fronted by nginx) is reimplemented as a **single supervised Phoenix app** that
-preserves the exact external HTTP/WS paths, so the original **React frontend runs unchanged**.
+Self-hosted SSH & remote management on the Erlang VM: web terminals, tunnels, file
+management, host metrics and alerting, RBAC/SSO, session recordings, and an agent interface
+(API keys, CLI, MCP) — all served by a **single supervised Phoenix app**.
+
+Termelix began as an Elixir/Phoenix port of [Termix](https://github.com/Termix-SSH/Termix)
+and still speaks the HTTP/WS contract of the Termix React SPA — the UI is built from
+[our fork](https://github.com/sysinit-at/termelix-frontend) — but it has since become its
+own product: the ~103K-LOC Node/TypeScript backend (12 micro-services behind nginx) is
+replaced by one OTP application, the remote-desktop protocols (RDP/VNC/Telnet) are gone,
+several upstream features were retired, and the agent interface and tmux monitoring are new.
 
 Why the BEAM: OTP gives native SSH (`:ssh`), crypto (`:crypto`), and LDAP (`:eldap`); Phoenix
 Channels/WebSockets fit the terminal/tunnel/console streams; and OTP supervision models the

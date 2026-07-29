@@ -1,4 +1,4 @@
-# Termelix on the BEAM — single-container deployment.
+# Termelix — single-container deployment.
 #
 # Build context is the repo root; the frontend source is required at ./frontend
 # (e.g. `git clone https://github.com/Termix-SSH/Termix frontend` or a submodule) —

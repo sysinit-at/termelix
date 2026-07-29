@@ -1,11 +1,11 @@
-# Termelix on the BEAM — production image.
+# Termelix — production image.
 #
-# Stage 1 builds the React SPA from the original Termix frontend source (vendored in at
-# build time via the build context, see docker-compose.yml), stage 2 builds the Elixir
-# release with the SPA staged into priv/static/spa, stage 3 is a slim runtime.
+# Stage 1 builds the React SPA from the frontend source (vendored in at build time via
+# the build context, see docker-compose.yml), stage 2 builds the Elixir release with the
+# SPA staged into priv/static/spa, stage 3 is a slim runtime.
 #
-# The single container replaces the original's nginx + 12 Node services: the Phoenix
-# endpoint serves the SPA and every API/WS path on one port.
+# One container serves everything: the Phoenix endpoint serves the SPA and every API/WS
+# path on one port (where the original Termix stack needed nginx plus twelve Node services).
 
 ARG ELIXIR_IMAGE=elixir:1.20-otp-29-slim
 
